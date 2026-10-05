@@ -1,0 +1,74 @@
+---
+title: "Nursing Demand Time Series Dataset"
+author: "Ezekiel Iwarimie"
+date: "2026-10-04"
+output: html_document
+---
+```{r}
+library(readr)
+library(fpp2)
+
+housing <- read.csv("~/Downloads/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv")
+```
+
+# Extract United States time series
+```{r}
+us_housing <- housing[housing$RegionName == "United States", ]
+us_values <- as.numeric(us_housing[1, 6:ncol(us_housing)])
+us_ts <- ts(us_values, start = c(2000, 1), frequency = 12)
+
+plot(us_ts, main = "US Zillow Home Value Index", ylab = "ZHVI ($)", xlab = "Year")
+Acf(us_ts)
+```
+#Plots
+## 1. Mean
+```{r}
+mean_forecast <- meanf(us_ts, h = 12)
+plot(mean_forecast)
+```
+## 2. Naive
+```{r}
+naive_forecast <- naive(us_ts, h = 12)
+plot(naive_forecast)
+```
+## 3. Random Walk with Drift
+```{r}
+rwf_forecast <- rwf(us_ts, h = 12, drift = TRUE)
+plot(rwf_forecast)
+```
+## 4. Seasonal Naive
+```{r}
+snaive_forecast <- snaive(us_ts, h = 12)
+plot(snaive_forecast)
+```
+## 5. Moving Averages
+```{r}
+MA5_forecast <- ma(us_ts, order = 5)
+plot(MA5_forecast)
+MA9_forecast <- ma(us_ts, order = 9)
+plot(MA9_forecast)
+```
+## 6. ETS
+```{r}
+ets_model <- ets(us_ts)
+ets_forecast <- forecast(ets_model, h = 12)
+plot(ets_forecast)
+```
+## 7. Holt-Winters
+```{r}
+HW_model <- HoltWinters(us_ts)
+HW_forecast <- forecast(HW_model, h = 12)
+plot(HW_forecast)
+```
+
+## Compare models using Root Mean Squared Error (RMSE)
+```{r}
+accuracy(mean_forecast)[1, "RMSE"]
+accuracy(naive_forecast)[1, "RMSE"]
+accuracy(rwf_forecast)[1, "RMSE"]
+accuracy(snaive_forecast)[1, "RMSE"]
+accuracy(ets_forecast)[1, "RMSE"]
+accuracy(HW_forecast)[1, "RMSE"]
+```
+
+### I chose Root Mean Squared Error (RMSE)) as the accuracy measure to compare the models. RMSE measures the average magnitude of prediction errors and penalizes larger deviations more heavily, which is crucial when forecasting home values. Among all models, the ETS model achieved the lowest RMSE, making it the best-performing model for this time series.
